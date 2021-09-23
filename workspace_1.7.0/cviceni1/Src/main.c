@@ -30,11 +30,19 @@ int main(void)
 	RCC->AHBENR |= RCC_AHBENR_GPIOAEN; //povoleni hodin
 	GPIOA->MODER |= GPIO_MODER_MODER5_0; //nastaveni pinu jako vystupni
 
-
+	uint8_t pole[32] = {1,0,1,0,1,0,0,1,1,1,0,1,1,1,0,1,1,1,0,0,1,0,1,0,1,0,0,0,0,0,0,0};
 
     /* Loop forever */
 	for(;;){
-		GPIOA->ODR ^= (1<<5); //toggle pin
-		for (volatile uint32_t i = 0; i < 100000; i++) {} //wait smycka - volatile - rika kompilatoru at neoptimalizuje
+		for (uint8_t var = 0; var < 31; ++var) {
+			if (pole[var]) {
+				GPIOA->BSRR = (1<<5); // set
+			} else {
+				GPIOA->BRR = (1<<5); // reset
+			}
+
+			for (volatile uint32_t i = 0; i < 100000; i++) {} //wait smycka - volatile - rika kompilatoru at neoptimalizuje
+		}
+
 	}
 }
