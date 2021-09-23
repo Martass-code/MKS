@@ -30,16 +30,20 @@ int main(void)
 	RCC->AHBENR |= RCC_AHBENR_GPIOAEN; //povoleni hodin
 	GPIOA->MODER |= GPIO_MODER_MODER5_0; //nastaveni pinu jako vystupni
 
-	uint32_t morse = 0b10101001110111011100101010000000;
+
+	uint32_t mask =  0b10000000000000000000000000000000;
 
     /* Loop forever */
 	for(;;){
+		uint32_t morse = 0b10101001110111011100101010000000;
 		for (uint8_t var = 0; var < 31; ++var) {
-			if ((morse>>var) & 1) {
+			if (morse & mask) {
 				GPIOA->BSRR = (1<<5); // set
 			} else {
 				GPIOA->BRR = (1<<5); // reset
 			}
+
+			morse <<= 1;
 
 			for (volatile uint32_t i = 0; i < 100000; i++) {} //wait smycka - volatile - rika kompilatoru at neoptimalizuje
 		}
