@@ -30,12 +30,12 @@ int main(void)
 	RCC->AHBENR |= RCC_AHBENR_GPIOAEN; //povoleni hodin
 	GPIOA->MODER |= GPIO_MODER_MODER5_0; //nastaveni pinu jako vystupni
 
-	uint8_t pole[32] = {1,0,1,0,1,0,0,1,1,1,0,1,1,1,0,1,1,1,0,0,1,0,1,0,1,0,0,0,0,0,0,0};
+	uint32_t morse = 0b10101001110111011100101010000000;
 
     /* Loop forever */
 	for(;;){
 		for (uint8_t var = 0; var < 31; ++var) {
-			if (pole[var]) {
+			if ((morse>>var) & 1) {
 				GPIOA->BSRR = (1<<5); // set
 			} else {
 				GPIOA->BRR = (1<<5); // reset
