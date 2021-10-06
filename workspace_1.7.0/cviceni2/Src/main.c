@@ -1,4 +1,3 @@
-//2.3 uloha
 
 /**
  ******************************************************************************
@@ -27,15 +26,24 @@
   #warning "FPU is not initialized, but the project is compiling for an FPU. Please initialize the FPU before use."
 #endif
 
-int main(void)
-{
+#define LED_TIME_BLINK 300 // blikaci perioda 300 ms
+
+
+void blikac(void);//blika ledkou neblokujicim zpusobem s periodou LED_TIME_BLINK
+
+
+int main(void) {
 
 	/*
-	o LED1 (vlevo) = PA4
-	o LED2 (vpravo) = PB0
-	o S1 (vpravo) = PC1
-	o S2 (vlevo) = PC0 (EXTI0)
+	 o LED1 (vlevo) = PA4
+	 o LED2 (vpravo) = PB0
+	 o S1 (vpravo) = PC1
+	 o S2 (vlevo) = PC0 (EXTI0)
 	 */
+
+
+
+	SysTick_Config(8000); // 1ms inicializace SysTick casovace (hodiny jsou 8 MHz)
 
 	RCC->AHBENR |= RCC_AHBENR_GPIOAEN | RCC_AHBENR_GPIOBEN | RCC_AHBENR_GPIOCEN; // povoleni hodin portu A, B, C
 
@@ -47,25 +55,40 @@ int main(void)
 	GPIOC->PUPDR |= GPIO_PUPDR_PUPDR0_0; // S2 = PC0, pullup
 	GPIOC->PUPDR |= GPIO_PUPDR_PUPDR1_0; // S1 = PC1, pullup
 
-
 	SYSCFG->EXTICR[0] |= SYSCFG_EXTICR1_EXTI0_PC; // select PC0 for EXTI0
 	EXTI->IMR |= EXTI_IMR_MR0; // mask
 	EXTI->FTSR |= EXTI_FTSR_TR0; // trigger on falling edge
 	NVIC_EnableIRQ(EXTI0_1_IRQn); // enable EXTI0_1
 
-	GPIOA->BSRR = (1<<0); // set
+	GPIOA->BSRR = (1 << 0); // set
 
-	for(;;){
-
+	for (;;) {
+		blikac();
 	}
 
-
 }
 
-void EXTI0_1_IRQHandler(void)
+volatile uint32_t Tick;
+
+void SysTick_Handler(void) {
+	Tick++; //perioda 1ms
+}
+
+void blikac(void) //blika ledkou neblokujicim zpusobem s periodou LED_TIME_BLINK
 {
-  if (EXTI->PR & EXTI_PR_PR0) { // check line 0 has triggered the IT
-    EXTI->PR |= EXTI_PR_PR0; // clear the pending bit
-    GPIOB->ODR ^= (1<<0); // toggle
+  static uint32_t delay = 0;
+
+  if (Tick > (delay + LED_TIME_BLINK)) {
+    GPIOA->ODR ^= (1 << 4);
+    delay = Tick;
   }
 }
+
+void EXTI0_1_IRQHandler(void) //detekce zmacknuti tlacitka
+{
+	if (EXTI->PR & EXTI_PR_PR0) { // check line 0 has triggered the IT
+		EXTI->PR |= EXTI_PR_PR0; // clear the pending bit
+		GPIOB->ODR ^= (1 << 0); // toggle
+	}
+}
+
