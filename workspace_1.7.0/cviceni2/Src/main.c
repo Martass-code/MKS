@@ -29,7 +29,7 @@
 
 #define LED_TIME_SHORT 100 // doba rozsviceni LED2
 #define LED_TIME_LONG 1000 // doba rozsviceni LED2
-#define VZORKOVANI 40 //perioda vzorkovani tlacitka
+#define VZORKOVANI 5 //perioda vzorkovani tlacitka
 
 void tlacitka(void); //rizeni LED podle stisknuti tlacitek
 
@@ -94,26 +94,29 @@ void tlacitka(void) {
 
 		delay_s2 = Tick;
 	}
-	/*
-	 if (Tick > off_time_s2) { //cas vypnuti LED nastal
-	 GPIOB->BRR = (1 << 0); //vypnuti LED
-	 }
-	 */
+
 	//obsluha tlacitka1
 	static uint32_t new_s1;
-	static uint32_t old_s1;
+	//static uint32_t old_s1;
 	static uint32_t off_time_s1;
+
+	static uint16_t debounce = 0xFFFF;
 
 	static uint32_t delay_s1 = 0;
 
 	if (Tick > (delay_s1 + VZORKOVANI)) {
 		new_s1 = GPIOC->IDR & (1 << 1); //aktualni stav tlacitka
+		debounce <<= 1; //(kdyz bude seple tak tam zustane shiftnuta 0)
+		//debounce = (new_s1 & 0x0001)
+		if (new_s1) { //pokud tlacitko rozeple tak shiftnout 1 do debounce
+			debounce |= 0x0001;
+		}
 
-		if (old_s1 && !(new_s1 >> 1)) { // detekce sestupne hrany - (old 1 new 0)
+		if (debounce == 0x7FFF) { // detekce sestupne hrany - (old 1 new 0)
 			off_time_s1 = Tick + LED_TIME_LONG; //vypocet casu vypnuti LED2
 			GPIOB->BSRR = (1 << 0); //zapnuti LED2 - PB0 - vpravo
 		}
-		old_s1 = new_s1; //aktualizace minuleho stavu tlacitka
+		//old_s1 = new_s1; //aktualizace minuleho stavu tlacitka
 
 		delay_s1 = Tick; //dalsi vzorkovaci perioda bude v tomhle case
 	}
