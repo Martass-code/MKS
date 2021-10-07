@@ -20,9 +20,13 @@
 #define sct_clk(x) do { if (x) GPIOB->BSRR = (1 << 3); else GPIOB->BRR = (1 << 3); } while (0) // PD3 CLK
 #define sct_noe(x) do { if (x) GPIOB->BSRR = (1 << 10); else GPIOB->BRR = (1 << 10); } while (0) // PD6 /OE
 
+static const uint32_t reg_values[3][10];
+
 void sct_init(void); //povoleni hodin prislusnych portu (RCC_AHBENR_GPIOB), nastaveni pinu jako vystupnich (GPIO_MODER_MODERx_0),
 // zapis nul do posuvneho registru (volání sct_led(0)), aktivování výstupu pomocí /OE (volání sct_noe(0))
 
-void sct_led(uint32_t value);
+void sct_led(uint32_t value); //zapise hodnoty na displej
+
+void sct_value(uint16_t value); //preklad cislovek na odpovidajici segmenty
 
 #endif /* SCT_H_ */

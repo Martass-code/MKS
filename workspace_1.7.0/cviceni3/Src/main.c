@@ -33,11 +33,14 @@ int main(void) {
 
 	sct_init();
 
-	sct_led(0x7A5C36DE);
-
+	//sct_led(0x7A5C36DE);
+	//sct_value(999);
 
 	for (;;) {
-		//sct_led(0x7A5C36DE);
+		for (uint16_t i = 0; i <= 999; i=i+111) {
+			sct_value(i);
+			for (volatile uint32_t i = 0; i < 100000; i++) {} //wait smycka - volatile - rika kompilatoru at neoptimalizuje
+		}
 
 	}
 
