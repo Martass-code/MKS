@@ -1,4 +1,4 @@
-Core/Src/sct.o: ../Core/Src/sct.c ../Core/Inc/sct.h \
+Core/Src/sct.o: ../Core/Src/sct.c \
  ../Drivers/CMSIS/Device/ST/STM32F0xx/Include/stm32f0xx.h \
  ../Drivers/CMSIS/Device/ST/STM32F0xx/Include/stm32f030x8.h \
  ../Drivers/CMSIS/Include/core_cm0.h \
@@ -24,11 +24,11 @@ Core/Src/sct.o: ../Core/Src/sct.c ../Core/Inc/sct.h \
  ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_i2c_ex.h \
  ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_pwr.h \
  ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_pwr_ex.h \
+ ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_tim.h \
+ ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_tim_ex.h \
  ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_uart.h \
  ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_uart_ex.h \
- ../Core/Inc/main.h
-
-../Core/Inc/sct.h:
+ ../Core/Inc/main.h ../Core/Inc/sct.h
 
 ../Drivers/CMSIS/Device/ST/STM32F0xx/Include/stm32f0xx.h:
 
@@ -80,8 +80,14 @@ Core/Src/sct.o: ../Core/Src/sct.c ../Core/Inc/sct.h \
 
 ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_pwr_ex.h:
 
+../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_tim.h:
+
+../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_tim_ex.h:
+
 ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_uart.h:
 
 ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_uart_ex.h:
 
 ../Core/Inc/main.h:
+
+../Core/Inc/sct.h:

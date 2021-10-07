@@ -1,3 +1,3 @@
-sct.c:51:6:sct_init	8	static
-sct.c:69:6:sct_led	24	static
-sct.c:103:6:sct_value	24	static
+sct.c:53:6:sct_init	8	static
+sct.c:71:6:sct_led	24	static
+sct.c:105:6:sct_value	24	static

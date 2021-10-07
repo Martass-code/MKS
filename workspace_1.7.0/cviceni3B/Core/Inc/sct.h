@@ -9,8 +9,7 @@
 #define SCT_H_
 
 #include <stdint.h>
-#include "stm32f0xx.h"
-#include "main.h"
+
 
 #if !defined(__SOFT_FP__) && defined(__ARM_FP)
   #warning "FPU is not initialized, but the project is compiling for an FPU. Please initialize the FPU before use."
@@ -23,7 +22,6 @@
 #define sct_noe(x) do { if (x) GPIOB->BSRR = (1 << 10); else GPIOB->BRR = (1 << 10); } while (0) // PD6 /OE
 */
 
-static const uint32_t reg_values[3][10];
 
 void sct_init(void); //povoleni hodin prislusnych portu (RCC_AHBENR_GPIOB), nastaveni pinu jako vystupnich (GPIO_MODER_MODERx_0),
 // zapis nul do posuvneho registru (volání sct_led(0)), aktivování výstupu pomocí /OE (volání sct_noe(0))
