@@ -103,6 +103,11 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+
+		for (uint16_t i = 0; i <= 999; i=i+111) {
+			sct_value(i);
+			HAL_Delay(1000);
+		}
   }
   /* USER CODE END 3 */
 }

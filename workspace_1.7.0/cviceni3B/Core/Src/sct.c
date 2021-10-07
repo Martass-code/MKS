@@ -74,20 +74,20 @@ void sct_led(uint32_t value) {
 		HAL_GPIO_WritePin(SCT_SDI_GPIO_Port, SCT_SDI_Pin, zapis_SDI); //sct_sdi(zapis_SDI); //zapsani LSB bitu do SDI
 		value >>= 1; // bit shift do prava
 
-		HAL_Delay(100);//for (volatile uint32_t i = 0; i < 1000; i++) {} //cekaci smycka - pro ustaleni pinu (asi neni potreba)
+		HAL_Delay(10);//for (volatile uint32_t i = 0; i < 1000; i++) {} //cekaci smycka - pro ustaleni pinu (asi neni potreba)
 
 		HAL_GPIO_WritePin(SCT_CLK_GPIO_Port, SCT_CLK_Pin, 1); //sct_clk(1); // na nabeznou hranu se ovzorkuje z SDI a shiftnou se data
-		HAL_Delay(100);//for (volatile uint32_t i = 0; i < 1000; i++) {} //cekaci smycka - pro ustaleni pinu (asi neni potreba)
+		HAL_Delay(10);//for (volatile uint32_t i = 0; i < 1000; i++) {} //cekaci smycka - pro ustaleni pinu (asi neni potreba)
 		HAL_GPIO_WritePin(SCT_CLK_GPIO_Port, SCT_CLK_Pin, 0); //sct_clk(0);
-		HAL_Delay(100);//for (volatile uint32_t i = 0; i < 1000; i++) {} //cekaci smycka - pro ustaleni pinu (asi neni potreba)
+		HAL_Delay(10);//for (volatile uint32_t i = 0; i < 1000; i++) {} //cekaci smycka - pro ustaleni pinu (asi neni potreba)
 
 	}
 
 	HAL_GPIO_WritePin(SCT_NLA_GPIO_Port, SCT_NLA_Pin, 1); //sct_nla(1); // zapis do vystupnich registru
-	HAL_Delay(100);//for (volatile uint32_t i = 0; i < 1000; i++) {} //cekaci smycka - pro ustaleni pinu (asi neni potreba)
+	HAL_Delay(10);//for (volatile uint32_t i = 0; i < 1000; i++) {} //cekaci smycka - pro ustaleni pinu (asi neni potreba)
 	HAL_GPIO_WritePin(SCT_NLA_GPIO_Port, SCT_NLA_Pin, 0); //sct_nla(0);
 
-	HAL_Delay(100);//for (volatile uint32_t i = 0; i < 1000; i++) {} //cekaci smycka - pro ustaleni pinu (asi neni potreba)
+	HAL_Delay(10);//for (volatile uint32_t i = 0; i < 1000; i++) {} //cekaci smycka - pro ustaleni pinu (asi neni potreba)
 	//sct_noe(0);
 	//for (volatile uint32_t i = 0; i < 1000; i++) {} //cekaci smycka - pro ustaleni pinu (asi neni potreba)
 	//sct_noe(1);
