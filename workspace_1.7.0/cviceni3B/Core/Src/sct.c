@@ -7,6 +7,7 @@
 #include "stm32f0xx.h"
 #include "main.h"
 #include "sct.h"
+//pridane soubory jsou videt jen zde
 
 static const uint32_t reg_values[3][10] = {
 		{
@@ -51,7 +52,7 @@ static const uint32_t reg_values[3][10] = {
 };
 
 void sct_init(void) {
-	/*
+	/* neni potreba - nastaveno v CubeMX
 	RCC->AHBENR |= RCC_AHBENR_GPIOBEN; // povoleni hodin portu B
 	//RCC->APB2ENR |= RCC_APB2ENR_SYSCFGEN; //povoleni hodin SYSCFG
 
