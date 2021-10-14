@@ -36,7 +36,7 @@
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-
+#define ADC_Q 14
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
@@ -60,10 +60,15 @@ static void MX_ADC_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 static volatile uint32_t raw_pot; //staticka promenna pro ulozeni hodnoty z ADC
+static uint32_t avg_pot;
 
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc) // callback, ktery je volan po dokonceni kazdeho prevodu //musi byt v user code 0 - nahore
 {
-raw_pot = HAL_ADC_GetValue(hadc);
+	raw_pot = avg_pot >> ADC_Q; // exponenciální kumulaci. Použijte bitový posun (ADC_Q) o cca 12 (tj. dělení 212).
+	avg_pot -= raw_pot;
+	avg_pot += HAL_ADC_GetValue(hadc); //// s exp komulaci
+
+    //raw_pot = HAL_ADC_GetValue(hadc); //poze prectena hodnota z ADC
 }
 /* USER CODE END 0 */
 
