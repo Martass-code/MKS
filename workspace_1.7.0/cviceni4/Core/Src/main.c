@@ -37,6 +37,13 @@
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
 #define ADC_Q 14
+
+/* Temperature sensor calibration value address */
+#define TEMP110_CAL_ADDR ((uint16_t*) ((uint32_t) 0x1FFFF7C2))
+#define TEMP30_CAL_ADDR ((uint16_t*) ((uint32_t) 0x1FFFF7B8))
+/* Internal voltage reference calibration value address */
+#define VREFINT_CAL_ADDR ((uint16_t*) ((uint32_t) 0x1FFFF7BA))
+
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
@@ -60,15 +67,38 @@ static void MX_ADC_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 static volatile uint32_t raw_pot; //staticka promenna pro ulozeni hodnoty z ADC
-static uint32_t avg_pot;
+static uint32_t avg_pot; //s exp komulaci
+static uint32_t raw_temp; //teplota
+static uint32_t raw_volt; //napeti
 
-void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc) // callback, ktery je volan po dokonceni kazdeho prevodu //musi byt v user code 0 - nahore
+static uint8_t channel = 0; //exp komulace zacina
+
+void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc) // callback, ktery je volan po dokonceni kazdeho prevodu //musi byt v user code 0 - nahore
 {
-	raw_pot = avg_pot >> ADC_Q; // exponenciální kumulaci. Použijte bitový posun (ADC_Q) o cca 12 (tj. dělení 212).
-	avg_pot -= raw_pot;
-	avg_pot += HAL_ADC_GetValue(hadc); //// s exp komulaci
 
-    //raw_pot = HAL_ADC_GetValue(hadc); //poze prectena hodnota z ADC
+	if (channel == 0) { //exp kom
+		raw_pot = avg_pot >> ADC_Q; // exponenciální kumulaci. Použijte bitový posun (ADC_Q) o cca 12 (tj. dělení 212).
+		avg_pot -= raw_pot;
+		avg_pot += HAL_ADC_GetValue(hadc); //// s exp komulaci
+	}
+
+	else if (channel == 1) { //teplota
+		raw_temp = HAL_ADC_GetValue(hadc);
+	}
+
+	else if (channel == 2) { //napeti
+		raw_volt = HAL_ADC_GetValue(hadc);
+	}
+
+	if (__HAL_ADC_GET_FLAG(hadc, ADC_FLAG_EOS))
+		channel = 0;
+	else
+		channel++;
+
+
+
+
+	//raw_pot = HAL_ADC_GetValue(hadc); //poze prectena hodnota z ADC
 }
 /* USER CODE END 0 */
 
@@ -114,11 +144,66 @@ int main(void) {
 	/* Infinite loop */
 	/* USER CODE BEGIN WHILE */
 	while (1) {
-		uint16_t value = raw_pot*500/4095; //zobrazeni na displeji
-		uint8_t led = value*9/500; // i zadna nesvitici led je jedna z variant = takze 9
 
-		sct_value(value,led);
-		HAL_Delay(50);
+		 uint16_t value = raw_pot*500/4095; //zobrazeni na displeji
+		 uint8_t led = value*9/500; // i zadna nesvitici led je jedna z variant = takze 9
+
+		 //sct_value(value,led);
+		 //HAL_Delay(50);
+
+
+
+		uint32_t voltage = 330 * (*VREFINT_CAL_ADDR) / raw_volt;
+		int32_t temperature = (raw_temp - (int32_t) (*TEMP30_CAL_ADDR));
+
+		temperature = temperature * (int32_t) (110 - 30);
+		temperature = temperature / (int32_t) (*TEMP110_CAL_ADDR - *TEMP30_CAL_ADDR);
+		temperature = temperature + 30;
+
+		uint32_t tick;
+
+		static enum {
+			SHOW_POT, SHOW_VOLT, SHOW_TEMP
+		} state = SHOW_TEMP;
+
+		switch (state) {
+		case SHOW_POT:
+			sct_value(value, led);
+
+			break;
+
+		case SHOW_VOLT:
+			sct_value(voltage, 0);
+
+			break;
+		case SHOW_TEMP:
+			sct_value(temperature, 0);
+
+			break;
+
+		default:
+			break;
+		}
+
+		if (!HAL_GPIO_ReadPin(S1_GPIO_Port,S1_Pin)) {
+			state = SHOW_VOLT;
+			tick = HAL_GetTick();
+		}
+
+		else if (!HAL_GPIO_ReadPin(S2_GPIO_Port,S2_Pin)) {
+			state = SHOW_TEMP;
+			tick = HAL_GetTick();
+		}
+
+		else if (HAL_GetTick() >= tick+1000) {
+			state = SHOW_POT;
+			tick = HAL_GetTick();
+		}
+
+
+
+
+		//sct_value(temperature, 0);
 		/* USER CODE END WHILE */
 
 		/* USER CODE BEGIN 3 */
@@ -172,7 +257,6 @@ static void MX_ADC_Init(void) {
 
 	/* USER CODE BEGIN ADC_Init 0 */
 
-
 	/* USER CODE END ADC_Init 0 */
 
 	ADC_ChannelConfTypeDef sConfig = { 0 };
@@ -204,6 +288,18 @@ static void MX_ADC_Init(void) {
 	sConfig.Channel = ADC_CHANNEL_0;
 	sConfig.Rank = ADC_RANK_CHANNEL_NUMBER;
 	sConfig.SamplingTime = ADC_SAMPLETIME_239CYCLES_5;
+	if (HAL_ADC_ConfigChannel(&hadc, &sConfig) != HAL_OK) {
+		Error_Handler();
+	}
+	/** Configure for the selected ADC regular channel to be converted.
+	 */
+	sConfig.Channel = ADC_CHANNEL_TEMPSENSOR;
+	if (HAL_ADC_ConfigChannel(&hadc, &sConfig) != HAL_OK) {
+		Error_Handler();
+	}
+	/** Configure for the selected ADC regular channel to be converted.
+	 */
+	sConfig.Channel = ADC_CHANNEL_VREFINT;
 	if (HAL_ADC_ConfigChannel(&hadc, &sConfig) != HAL_OK) {
 		Error_Handler();
 	}
@@ -274,6 +370,12 @@ static void MX_GPIO_Init(void) {
 	GPIO_InitStruct.Pull = GPIO_NOPULL;
 	HAL_GPIO_Init(B1_GPIO_Port, &GPIO_InitStruct);
 
+	/*Configure GPIO pins : S2_Pin S1_Pin */
+	GPIO_InitStruct.Pin = S2_Pin | S1_Pin;
+	GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+	GPIO_InitStruct.Pull = GPIO_PULLUP;
+	HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+
 	/*Configure GPIO pin : LD2_Pin */
 	GPIO_InitStruct.Pin = LD2_Pin;
 	GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
@@ -291,7 +393,6 @@ static void MX_GPIO_Init(void) {
 }
 
 /* USER CODE BEGIN 4 */
-
 
 /* USER CODE END 4 */
 
