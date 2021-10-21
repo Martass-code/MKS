@@ -1,28 +1,28 @@
 /* USER CODE BEGIN Header */
 /**
-  ******************************************************************************
-  * @file           : main.c
-  * @brief          : Main program body
-  ******************************************************************************
-  * @attention
-  *
-  * <h2><center>&copy; Copyright (c) 2021 STMicroelectronics.
-  * All rights reserved.</center></h2>
-  *
-  * This software component is licensed by ST under BSD 3-Clause license,
-  * the "License"; You may not use this file except in compliance with the
-  * License. You may obtain a copy of the License at:
-  *                        opensource.org/licenses/BSD-3-Clause
-  *
-  ******************************************************************************
-  */
+ ******************************************************************************
+ * @file           : main.c
+ * @brief          : Main program body
+ ******************************************************************************
+ * @attention
+ *
+ * <h2><center>&copy; Copyright (c) 2021 STMicroelectronics.
+ * All rights reserved.</center></h2>
+ *
+ * This software component is licensed by ST under BSD 3-Clause license,
+ * the "License"; You may not use this file except in compliance with the
+ * License. You may obtain a copy of the License at:
+ *                        opensource.org/licenses/BSD-3-Clause
+ *
+ ******************************************************************************
+ */
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include <stdio.h> //aby fungoval vypis printf()
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -32,15 +32,23 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+
+//Deklarace buffer a indexy cteni a zapisu
+#define RX_BUFFER_LEN 64
+static uint8_t uart_rx_buf[RX_BUFFER_LEN];
+static volatile uint16_t uart_rx_read_ptr = 0;
+//posouvani indexu cteni v bufferu dokun pointry cteni a zapisu nejsou stejne (zapis se posouva sam)
+#define uart_rx_write_ptr (RX_BUFFER_LEN - hdma_usart2_rx.Instance->CNDTR)
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-
+#define CMD_BUFFER_LEN 256 //vhodna velikost bufferu pro textovy prikaz
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
 UART_HandleTypeDef huart2;
+DMA_HandleTypeDef hdma_usart2_rx;
 
 /* USER CODE BEGIN PV */
 
@@ -49,14 +57,43 @@ UART_HandleTypeDef huart2;
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
+static void MX_DMA_Init(void);
 static void MX_USART2_UART_Init(void);
 /* USER CODE BEGIN PFP */
-
+static void uart_byte_available(uint8_t c);
+static void uart_process_command(char *cmd);
+int _write(int file, char const *buf, int n);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
+//uklada tisknutelne znaky ASCII 32 az 126 do dalsiho bufferu, ktery obsahuje poskladany textovy prikaz
+// az najde konec radku tak zavola obsluhu pro vyhodnoceni prikazu
+static void uart_byte_available(uint8_t c) {
+	static uint16_t cnt;
+	static char data[CMD_BUFFER_LEN];
+	if (cnt < CMD_BUFFER_LEN && c >= 32 && c <= 126)
+		data[cnt++] = c;
+	if ((c == '\n' || c == '\r') && cnt > 0) { //narazilo se na konec retezce
+		data[cnt] = '\0'; //ukoncime nulou
+		uart_process_command(data); //vypis celeho retezce
+		cnt = 0;
+	}
+}
+
+//vypis celeho retezce
+static void uart_process_command(char *cmd){ //predani ukazatele
+	printf("prijato: '%s'\n", cmd);
+}
+
+//funkce je definovana jako weak - tim se prepsala
+int _write(int file, char const *buf, int n)
+{
+/* stdout redirection to UART2 */
+HAL_UART_Transmit(&huart2, (uint8_t*)(buf), n, HAL_MAX_DELAY);
+return n;
+}
 /* USER CODE END 0 */
 
 /**
@@ -87,22 +124,33 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_DMA_Init();
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
+	HAL_UART_Receive_DMA(&huart2, uart_rx_buf, RX_BUFFER_LEN); //aktivace DMA cteni z UARTu
+	//printf("prijato: '%s'\n", "text");
 
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  while (1)
-  {
-	  uint8_t c;
-	  HAL_UART_Receive(&huart2, &c, 1, HAL_MAX_DELAY);
-	  HAL_UART_Transmit(&huart2, &c, 1, HAL_MAX_DELAY);
+	while (1) {
+		//uint8_t c;
+		//HAL_UART_Receive(&huart2, &c, 1, HAL_MAX_DELAY); //klasicke polling - ceka se na jeden byte (znak) na 1 neznamenkovou promenou
+		//HAL_UART_Transmit(&huart2, &c, 1, HAL_MAX_DELAY);
+
+		//zpracovani jednotlivych bajtu z bufferu - kdyz dojde k zablokovani (po urcitou dobu ISR)
+		// -> data se nahromadi v bufferu a zpracuji se jakmile je k dispozici procesorovy cas
+		while (uart_rx_read_ptr != uart_rx_write_ptr) { //dokkud se cteci a zapisovaci pointr nerovna
+			uint8_t b = uart_rx_buf[uart_rx_read_ptr];
+			if (++uart_rx_read_ptr >= RX_BUFFER_LEN)
+				uart_rx_read_ptr = 0; // increase read pointer
+			uart_byte_available(b); // process every received byte with the RX state machine
+		}
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-  }
+	}
   /* USER CODE END 3 */
 }
 
@@ -179,6 +227,22 @@ static void MX_USART2_UART_Init(void)
 }
 
 /**
+  * Enable DMA controller clock
+  */
+static void MX_DMA_Init(void)
+{
+
+  /* DMA controller clock enable */
+  __HAL_RCC_DMA1_CLK_ENABLE();
+
+  /* DMA interrupt init */
+  /* DMA1_Channel4_5_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Channel4_5_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Channel4_5_IRQn);
+
+}
+
+/**
   * @brief GPIO Initialization Function
   * @param None
   * @retval None
@@ -221,11 +285,10 @@ static void MX_GPIO_Init(void)
 void Error_Handler(void)
 {
   /* USER CODE BEGIN Error_Handler_Debug */
-  /* User can add his own implementation to report the HAL error return state */
-  __disable_irq();
-  while (1)
-  {
-  }
+	/* User can add his own implementation to report the HAL error return state */
+	__disable_irq();
+	while (1) {
+	}
   /* USER CODE END Error_Handler_Debug */
 }
 
