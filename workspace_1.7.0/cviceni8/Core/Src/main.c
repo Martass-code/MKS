@@ -24,6 +24,7 @@
 /* USER CODE BEGIN Includes */
 
 #include <stdio.h>
+#include <string.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -100,7 +101,15 @@ int main(void) {
 	/* USER CODE BEGIN 2 */
 	HAL_TIM_Base_Start_IT(&htim3); //povoleni preruseni casove zakladny
 	//
+	uint8_t kod_pozadovany[5] = { 7, 9, 3, 2, 12};//{ 7, 9, 3, 2, 12};
+	uint8_t kod_zadavany[5] = { 0, 0, 0, 0, 0};
+	uint8_t pozice = 0;
+	//uint8_t kod_je_spravny = 0;
 
+	uint32_t cas_vyprseni;
+	uint8_t bezi_vyprseni = 0;
+	uint8_t spravnost = 0;
+	HAL_Delay(50);
 	printf("START \n");
 
 	/* USER CODE END 2 */
@@ -108,12 +117,88 @@ int main(void) {
 	/* Infinite loop */
 	/* USER CODE BEGIN WHILE */
 	while (1) {
-		HAL_GPIO_TogglePin(LD1_GPIO_Port, LD1_Pin);
-		HAL_Delay(500);
+
+		HAL_Delay(250);
 		if (key != -1) {
+			//cas pro zadani jeste nevyprsel
 			//obsluha tlacitka
-			printf("tlacitko: %d \n", key);
+			bezi_vyprseni = 1;
+			printf("zadano: \n");
+			kod_zadavany[pozice] = key;
+
+			if (pozice == 0) {
+				cas_vyprseni = HAL_GetTick() + 15000;
+			}
+
+			for (uint8_t i = 0; i < 5; i++) { //vytisk dosud zmacknutych tlacitek
+				printf("%d ", kod_zadavany[i]);
+
+			}
+			printf("\n");
+/*
+			if (pozice == 4) {
+				bezi_vyprseni = 0;
+				if (strcmp(kod_zadavany, kod_pozadovany) == 0) {
+					HAL_GPIO_WritePin(LD1_GPIO_Port, LD1_Pin, GPIO_PIN_SET);
+					printf("kod je spravny \n");
+				} else {
+					printf("kod je spatny \n");
+				}
+			}
+*/
+			if (key == kod_pozadovany[pozice]) {
+				spravnost++;
+				if (pozice == 4) {
+					for (uint8_t i = 0; i < 5; ++i)	{
+						kod_zadavany[i] = 0;
+					}
+
+					if (spravnost == 5) {
+						spravnost = 0;
+						bezi_vyprseni = 0;
+						HAL_GPIO_WritePin(LD1_GPIO_Port, LD1_Pin, GPIO_PIN_SET);
+						printf("kod je spravny \n");
+					} else {
+						spravnost = 0;
+						bezi_vyprseni = 0;
+						HAL_GPIO_WritePin(LD1_GPIO_Port, LD1_Pin, GPIO_PIN_RESET);
+						printf("kod je spatny \n");
+
+					}
+					//pozice = 0;
+				}
+			}else if(pozice == 4) {
+				spravnost = 0;
+				bezi_vyprseni = 0;
+				HAL_GPIO_WritePin(LD1_GPIO_Port, LD1_Pin, GPIO_PIN_RESET);
+				printf("kod je spatny \n");
+			}
+
+			pozice++;
+			if (pozice > 4) { //prepsat zadane hodnoty kdyz je napsana vetsi velikost
+				for (uint8_t i = 0; i < 5; ++i) { //vynulovani
+					kod_zadavany[i] = 0;
+				}
+				pozice = 0;
+			}
+
+			HAL_Delay(1000);// kvuli zakmitum tlacitka
 			key = -1; //muze byt precteno dalsi tlacitko (minule bylo obslouzeno)
+
+		}
+
+		if ((HAL_GetTick() >= cas_vyprseni) && bezi_vyprseni) { //cas pro zadani vyprsel
+			bezi_vyprseni = 0; //
+
+			for (uint8_t i = 0; i < 5; ++i) {
+				kod_zadavany[i] = 0;
+			}
+			pozice = 0;
+
+			HAL_GPIO_WritePin(LD1_GPIO_Port, LD1_Pin, GPIO_PIN_RESET);
+
+			printf("cas pro zadani kodu vyprsel \n");
+
 		}
 		/* USER CODE END WHILE */
 
