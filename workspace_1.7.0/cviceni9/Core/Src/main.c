@@ -55,18 +55,17 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_USART3_UART_Init(void);
 /* USER CODE BEGIN PFP */
-void step(int8_t x_dif, int8_t y_dif, bool stisk, bool btn){ //pohne kurzorem o zadany rozdil
-	if(btn){
+/*
+void step(int8_t x_dif, int8_t y_dif){ //pohne kurzorem o zadany rozdil
 	  //odeslani jednoho reportu(kroku) mysi provede kod:
 	  uint8_t buff[4]; //
-	  buff[0] = stisk;//0x01; // stiskni leve tlacitko //3bity pro tlacitka
+	  buff[0] = 0x01; // stiskni leve tlacitko //3bity pro tlacitka
 	  buff[1] = (int8_t)(x_dif); //posun ve smeru x - znamen cislo
 	  buff[2] = (int8_t)(y_dif); //posun ve smeru y -znamen cislo
 	  buff[3] = 0; // bez scrollu
 	  USBD_HID_SendReport(&hUsbDeviceFS, buff, sizeof(buff)); //odeslani reportu
 	  HAL_Delay(USBD_HID_GetPollingInterval(&hUsbDeviceFS)); //delay aby stihl pocitac report odebrat (pc se dotazuje v intervalu
-	  //HAL_Delay(50);//vetsi zpomaleni
-	}
+	  HAL_Delay(50);//vetsi zpomaleni
 
 }
 
@@ -110,6 +109,30 @@ void kruznice(uint8_t polomer, uint8_t rozliseni, bool stisk,  bool btn){
 
 		}
 
+
+}*/
+
+void napis(uint8_t klavesa, uint8_t prava) {
+	uint8_t buff[9]; //
+	buff[0] = 0x01; //klavesnice
+	buff[1] = klavesa;
+	buff[2] = 0x00;
+	buff[3] = prava;
+	buff[4] = 0x00;
+	buff[5] = 0x00;
+	buff[6] = 0x00;
+	buff[7] = 0x00;
+	buff[8] = 0x00;
+
+	USBD_HID_SendReport(&hUsbDeviceFS, buff, sizeof(buff)); //odeslani reportu
+	HAL_Delay(USBD_HID_GetPollingInterval(&hUsbDeviceFS) * 10); //delay aby stihl pocitac report odebrat (pc se dotazuje v intervalu
+
+	//pusteni klavesy
+	buff[1] = 0x00;
+	buff[3] = 0x00;
+
+	USBD_HID_SendReport(&hUsbDeviceFS, buff, sizeof(buff)); //odeslani reportu
+	HAL_Delay(USBD_HID_GetPollingInterval(&hUsbDeviceFS) * 20); //delay aby stihl pocitac report odebrat (pc se dotazuje v intervalu
 
 }
 /* USER CODE END PFP */
@@ -159,6 +182,7 @@ int main(void)
   {   //kresleni probehne pouze kdyz je zmacknute tlacitko
 
 	  if(HAL_GPIO_ReadPin(USER_Btn_GPIO_Port, USER_Btn_Pin)){//kdyz se zmackne tlacitko, zacne se vykreslovat smajlik
+		  /*
       //kdykoliv je tlacitko pusteno je kresleni peruseno
 	  kruznice(100, 50, 1, HAL_GPIO_ReadPin(USER_Btn_GPIO_Port, USER_Btn_Pin)); //oblicej
 	  step(0, 0, 0, HAL_GPIO_ReadPin(USER_Btn_GPIO_Port, USER_Btn_Pin)); // pusteni praveho tlacitka
@@ -181,7 +205,44 @@ int main(void)
 	  step(0, 0, 0, HAL_GPIO_ReadPin(USER_Btn_GPIO_Port, USER_Btn_Pin)); // pusteni praveho tlacitka
 
 	  HAL_Delay(1000);
+*/
+		  /*
+			uint8_t buff[9]; //
+			buff[0] = 0x01; //klavesnice
+			buff[1] = 0x08; //WIN
+			buff[2] = 0x00;
+			buff[3] = 0x15; //R
+			buff[4] = 0x00;
+			buff[5] = 0x00;
+			buff[6] = 0x00;
+			buff[7] = 0x00;
+			buff[8] = 0x00;
 
+			USBD_HID_SendReport(&hUsbDeviceFS, buff, sizeof(buff)); //odeslani reportu
+			HAL_Delay(USBD_HID_GetPollingInterval(&hUsbDeviceFS)*10); //delay aby stihl pocitac report odebrat (pc se dotazuje v intervalu
+			//HAL_Delay(100);
+
+
+			buff[1] = 0x00;
+		    buff[3] = 0x00;
+
+			USBD_HID_SendReport(&hUsbDeviceFS, buff, sizeof(buff)); //odeslani reportu
+			HAL_Delay(USBD_HID_GetPollingInterval(&hUsbDeviceFS)*10); //delay aby stihl pocitac report odebrat (pc se dotazuje v intervalu
+
+			   0x10;//M
+			   0x16;//S
+			   0x13;//P
+			   0x04;//A
+			   0x0c;//I
+			   0x011;//N
+			 0x017;//T
+			 0x28;//ENTER
+			 */
+			napis(0x08, 0x15); //WIN + R
+			napis(0x10, 0x0); //M
+			napis(0x16, 0x0); //S
+
+			HAL_Delay(10000);
 	  }
 
     /* USER CODE END WHILE */
