@@ -57,6 +57,7 @@ void StartDefaultTask(void const * argument);
 
 /* USER CODE BEGIN PFP */
 extern void tcpecho_init(void); //deklarace prototypu init funkce
+extern void telnet_init(void);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -296,6 +297,7 @@ void StartDefaultTask(void const * argument)
   /* USER CODE BEGIN 5 */
   /* Initialize tcp echo server */
   tcpecho_init();
+  telnet_init();
   /* Infinite loop */
   for(;;)
   {

@@ -13,7 +13,8 @@ C_SRCS += \
 ../Core/Src/syscalls.c \
 ../Core/Src/sysmem.c \
 ../Core/Src/system_stm32f4xx.c \
-../Core/Src/tcpecho.c 
+../Core/Src/tcpecho.c \
+../Core/Src/telnet.c 
 
 OBJS += \
 ./Core/Src/freertos.o \
@@ -24,7 +25,8 @@ OBJS += \
 ./Core/Src/syscalls.o \
 ./Core/Src/sysmem.o \
 ./Core/Src/system_stm32f4xx.o \
-./Core/Src/tcpecho.o 
+./Core/Src/tcpecho.o \
+./Core/Src/telnet.o 
 
 C_DEPS += \
 ./Core/Src/freertos.d \
@@ -35,7 +37,8 @@ C_DEPS += \
 ./Core/Src/syscalls.d \
 ./Core/Src/sysmem.d \
 ./Core/Src/system_stm32f4xx.d \
-./Core/Src/tcpecho.d 
+./Core/Src/tcpecho.d \
+./Core/Src/telnet.d 
 
 
 # Each subdirectory must supply rules for building sources it contributes
